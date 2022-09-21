@@ -12,5 +12,6 @@ while j <= 15:
         if s1[i]==s2[i]:
             diff+=1
         count += 1    
-    print(f'{(diff/count)*100}% CHARACTERS MATCH...\n\n')
+    print(f'{(diff/count)*100}% CHARACTERS MATCH...')
     j += 1
+    

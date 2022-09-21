@@ -136,6 +136,127 @@ class SentenceCorrector(object):
                     global_count += segment_diff    
                     if global_count >= len(lisnext):
                         break
+    
+    
+    
+    def local_beam_search(self, str, left, right, segment_diff,israndom, debug, loopcounts, timeout, dfs, dfsfactor, n):
+        tabulist = []
+        self.best_state = str
+        curr = self.best_state
+        next_node = curr
+        count = 0
+        conf_mat = self.whole_string_substituter(str)
+        if debug:
+            print(conf_mat)
+        
+        global_count = left
+        loopcount = 0
+        mintillnow = list(str)
+        store = []
+        resultbeam = [curr]
+        while True:
+            for hue in range(0,len(resultbeam)):  
+                count += 1
+                if debug:
+                    print(f"Loop number : {count}")
+                curr = resultbeam[hue]
+                lisnext = list(resultbeam[hue])
+                mintillnow = lisnext
+                end = min(global_count+segment_diff,right)
+                peak = True         
+                for i in range(global_count,end):                
+                    if lisnext[i] != " ":  
+                        for j in range(len(conf_mat[i])):
+                            testing = list(resultbeam[hue])
+                            testing[i] = conf_mat[i][j]
+                            listostring = ""
+                            for k in range(len(testing)):
+                                listostring += testing[k]
+                            listostringmin = ""    
+                            for k in range(len(mintillnow)):
+                                listostringmin += mintillnow[k]    
+                            # print(listostring, " main string")  
+                            if debug:
+                                print((self.best_state), f" BEST {self.cost_fn(self.best_state)}")  
+                                print((listostringmin), f" MIN {self.cost_fn(listostringmin)}")
+                                print((listostring), f" CHKING {self.cost_fn(listostring)}")
+                            if timeout > 0:
+                                time.sleep(timeout)  
+                            chk = False   
+                            for hu2 in range(0,len(store)):
+                                if listostring == store[hu2]:  
+                                    chk = True
+                            if chk == False:        
+                                store.append([self.cost_fn(listostring),listostring])       
+                            if self.cost_fn(listostring) < self.cost_fn(listostringmin):
+                                chking = False
+                                for y in range(len(tabulist)):
+                                    if tabulist[y] == listostring:
+                                        chking = True
+                                if chking == True:
+                                    pass
+                                else:
+                                    peak = False
+                                    
+                                    if len(tabulist) < 100:
+                                        mintillnow = testing
+                                        tabulist.append(mintillnow)
+                                    else:
+                                        tabulist.pop(0)
+                                        mintillnow = testing
+                                        tabulist.append(mintillnow)     
+                                
+                                result = ""
+                                for k in range(0,len(mintillnow)):
+                                    result += mintillnow[k]  
+                                if self.cost_fn(self.best_state) >= self.cost_fn(result):
+                                    self.best_state = result 
+            store.sort()
+            # store.reverse()
+            resultbeam = []
+            for hue3 in range(0,n):
+                resultbeam.append(store[hue3][1])
+
+            store = []    
+            # print(resultbeam)
+                              
+                                
+                                
+            if israndom:
+                if peak:
+                    if debug:
+                        print("IT IS A PEAK, RANDOMIZING STRING")
+                     
+                    next_node = ""      
+                    loopcount += 1        
+                    if loopcount > loopcounts:     
+                        global_count += segment_diff
+                        loopcount = 0
+                    next_node = self.best_state        
+                    
+                    if debug:
+                        print("RUNNING LOCAL SEARCH ON SEGMENT : ", global_count, " This is loop count : ", loopcount)
+                    if global_count >= len(lisnext):
+                        break
+                else:               
+                    # next_node = ""            
+                    # for k in range(len(mintillnow)):
+                        # next_node += mintillnow[k]
+                    global_count += segment_diff    
+                    if global_count >= len(lisnext):
+                        break
+            else:
+                if peak:
+                    if debug:
+                        print("IT IS A PEAK ENDING LOCAL SEARCH")    
+                    break   
+                else:                
+                    next_node = ""            
+                    for k in range(len(mintillnow)):
+                        next_node += mintillnow[k]
+                    global_count += segment_diff    
+                    if global_count >= len(lisnext):
+                        break
     def dfs(self, stry, left, right, dfsfactor):
              # print(next_node, "INITIAL ", self.cost_fn(next_node))
                         # next_node = self.best_state
@@ -164,10 +285,19 @@ class SentenceCorrector(object):
                                         stack.append((node,ind+1))             
                               
     def search(self, start_state):
-        # self.local_search(string, left, right, segment_diff, random, debug, loopcounts, timeout, dfs, dfsfactor)
+        # self.local_search(string, left, right, segment_diff, random, debug, loopcounts, timeout, dfs, dfsfactor, beamfacotr)
         self.local_search(start_state, 0, len(start_state), 15, True, False, 1, 0, False, 5)
         stry = self.best_state
         self.local_search(stry, 0, len(stry), 15, True, False, 1, 0, False, 5)
+        stry = self.best_state
+        self.local_beam_search(stry, 0, len(stry), 15, True, False,1, 0, False, 5, 16)
+        # stry = self.best_state
+        # self.local_search(stry, 0, len(stry), len(stry), 15, True, 1, 0, False, 5)
+        # stry = self.best_state
+        # self.local_search(stry, 0, len(stry), len(stry), 15, True, 1, 0, False, 5)
+        # stry = self.best_state
+        # self.local_search(stry, 0, len(stry), len(stry), 15, True, 1, 0, False, 5)
+        
         print("khtm")
         wordlim = []
         init = 0
