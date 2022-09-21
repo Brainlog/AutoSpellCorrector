@@ -120,8 +120,7 @@ class SentenceCorrector(object):
                         else:
                             next_node += self.best_state[itr]        
                     loopcount += 1        
-                    if loopcount > loopcounts:   
-                        print("HERE")   
+                    if loopcount > loopcounts:     
                         global_count += segment_diff
                         loopcount = 0
                     next_node = self.best_state
@@ -151,9 +150,11 @@ class SentenceCorrector(object):
                               
     def search(self, start_state):
         # self.local_search(string, left, right, segment_diff, random, debug, loopcounts, timeout)
-        self.local_search(start_state, 0, len(start_state), 15, True, True, 1, 0)
+        self.local_search(start_state, 0, len(start_state), 15, True, False, 1, 0)
         stry = self.best_state
-        self.local_search(stry, 0, len(stry), 15, True, True, 1, 0)
+        self.local_search(stry, 0, len(stry), 15, True, False, 1, 0)
+        print("khtm")
+        
         
         
         
