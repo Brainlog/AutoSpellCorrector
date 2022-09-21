@@ -1,8 +1,5 @@
-from decimal import ROUND_HALF_DOWN
-from itertools import count
 import time
 import random
-from tracemalloc import start
 class SentenceCorrector(object):
     def __init__(self, cost_fn, conf_matrix):
         self.conf_matrix = conf_matrix
@@ -37,7 +34,7 @@ class SentenceCorrector(object):
                 conf_mat[x]=dict[str[x]]
         return conf_mat  
     
-    def local_search(self, str, left, right, segment_diff,israndom, debug, loopcounts, timeout):
+    def local_search(self, str, left, right, segment_diff,israndom, debug, loopcounts, timeout, dfs, dfsfactor):
         tabulist = []
         self.best_state = str
         curr = self.best_state
@@ -108,22 +105,14 @@ class SentenceCorrector(object):
                 if peak:
                     if debug:
                         print("IT IS A PEAK, RANDOMIZING STRING")
-                    next_node = ""
-                    for itr in  range(0,len(self.best_state)):
-                        if global_count <= itr and itr < end:
-                            if self.best_state[itr] != " ":
-                                randomnumber = random.randint(0,1000000)
-                                randomnumber = randomnumber%len(conf_mat[itr])
-                                next_node += conf_mat[itr][randomnumber]
-                            else:
-                                next_node += " "    
-                        else:
-                            next_node += self.best_state[itr]        
+                     
+                    next_node = ""      
                     loopcount += 1        
                     if loopcount > loopcounts:     
                         global_count += segment_diff
                         loopcount = 0
-                    next_node = self.best_state
+                    next_node = self.best_state        
+                    
                     if debug:
                         print("RUNNING LOCAL SEARCH ON SEGMENT : ", global_count, " This is loop count : ", loopcount)
                     if global_count >= len(lisnext):
@@ -147,13 +136,58 @@ class SentenceCorrector(object):
                     global_count += segment_diff    
                     if global_count >= len(lisnext):
                         break
+    def dfs(self, stry, left, right, dfsfactor):
+             # print(next_node, "INITIAL ", self.cost_fn(next_node))
+                        # next_node = self.best_state
+                        conf_mat = self.whole_string_substituter(stry)
+                        if right - left <= dfsfactor:
+                            stack=[]
+                            stack.append((self.best_state,left))
+                            print(left, " ", right)
+                            while(len(stack)>0):
+                                (node,ind) = stack.pop()
+                                print(f'NODE RECIEVED: {node}')
+                                if(self.cost_fn(node)<self.cost_fn(self.best_state)):
+                                    self.best_state=node
+                                if(node[ind]!=' '):
+                                    for q_i in range(len(conf_mat[ind])):
+                                        strnew = ''
+                                        for d in range(len(node)):
+                                            if(ind!=d):
+                                                strnew+=node[d]
+                                            else:
+                                                strnew+=conf_mat[ind][q_i]
+                                        if(ind+1<right):
+                                            stack.append((strnew,ind+1))
+                                else:
+                                    if(ind+1<right):
+                                        stack.append((node,ind+1))             
                               
     def search(self, start_state):
-        # self.local_search(string, left, right, segment_diff, random, debug, loopcounts, timeout)
-        self.local_search(start_state, 0, len(start_state), 15, True, False, 1, 0)
+        # self.local_search(string, left, right, segment_diff, random, debug, loopcounts, timeout, dfs, dfsfactor)
+        self.local_search(start_state, 0, len(start_state), 15, True, False, 1, 0, False, 5)
         stry = self.best_state
-        self.local_search(stry, 0, len(stry), 15, True, False, 1, 0)
+        self.local_search(stry, 0, len(stry), 15, True, False, 1, 0, False, 5)
         print("khtm")
+        wordlim = []
+        init = 0
+        end = 0
+        
+        for i in range(len(stry)):
+            if(stry[i]==' '):
+                end = i
+                wordlim.append((init,end))
+                init = i+1
+        # print(wordlim)
+        count = 1
+        for tup in wordlim:
+            # print(tup[0])
+            # self.local_search(stry, tup[0], tup[1]+1, 10, True, False, 5, 0, True, 4)
+            self.dfs(start_state, tup[0], tup[1]+1, 4)
+            # print(f'BEST STATE BY CHANGING WORD NUMBER {count}: {self.best_state}')
+            count+=1
+        # self.local_search(stry, 0, len(stry), 15, True, False, 1, 0)
+        # print("khtm")
         
         
         
