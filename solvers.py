@@ -1,4 +1,5 @@
 from decimal import ROUND_HALF_DOWN
+from itertools import count
 import time
 import random
 from tracemalloc import start
@@ -6,22 +7,14 @@ class SentenceCorrector(object):
     def __init__(self, cost_fn, conf_matrix):
         self.conf_matrix = conf_matrix
         self.cost_fn = cost_fn
-
-        # You should keep updating following variable with best string so far.
         self.best_state = None 
-         
-
-    def search(self, start_state):
-        tabulist = []
-        self.best_state = start_state
-        curr = self.best_state
-        next_node = curr
-        count = 0
+        
+    def whole_string_substituter(self,str):
+        #inverse dictionary
         conf_mat2 = []
-        conf_mat=[]#actual
-        dict = {}
-        
-        
+        dict = {}        
+        #whole string (which character to be substituted)
+        conf_mat=[]                
         for i in range(0,26):
             conf_mat2.append([chr(97+i)])
         count = 0    
@@ -35,49 +28,44 @@ class SentenceCorrector(object):
                 for ch2 in self.conf_matrix[ch]:
                     conf_mat2[ord(ch2)-97].append(ch)
         for i in range(0,26):
-            print(conf_mat2[i])
-            dict[chr(97+i)]= conf_mat2[i]
-                     
-     
-        
-        
-               
-        for x in range(len(start_state)):
+            # print(conf_mat2[i])
+            dict[chr(97+i)]= conf_mat2[i]               
+        for x in range(len(str)):
             conf_mat.append([])
-        for x in range(len(start_state)):
-            if (start_state[x]!=' '):
-                conf_mat[x]=dict[start_state[x]]
-                # conf_mat[x].append(start_state[x])
-        # for x in range(len(start_state)):
-        #     if (start_state[x]!=' '):
-        #         conf_mat[x].append(start_state[x]) 
-        print("----------------")
-        print(conf_mat[0], start_state[0])
-        print("---------------")
-        global_count = 0
+        for x in range(len(str)):
+            if (str[x]!=' '):
+                conf_mat[x]=dict[str[x]]
+        return conf_mat  
+    
+    def local_search(self, str, left, right, segment_diff,israndom, debug, loopcounts, timeout):
+        tabulist = []
+        self.best_state = str
+        curr = self.best_state
+        next_node = curr
+        count = 0
+        conf_mat = self.whole_string_substituter(str)
+        if debug:
+            print(conf_mat)
+        
+        global_count = left
         loopcount = 0
-        mintillnow = list(start_state)
-        while True:   
-            # print(next_node)
-            print(self.cost_fn(self.best_state))
-            # print(self.cost_fn("despite great potential developing economies ale still confronted by trade difficulties particularly debt he added "))
-            print(self.cost_fn("minister"), " INPUT")
-            print(self.cost_fn("miristeu"), " OUTPUT")
-            print(count)
-            
+        mintillnow = list(str)
+        
+        while True:
             count += 1
-            curr = next_node        
+            if debug:
+                print(f"Loop number : {count}")
+            curr = next_node
             lisnext = list(next_node)
             mintillnow = lisnext
+            end = min(global_count+segment_diff,right)
             peak = True
-            # print(lisnext)
-            end = min(global_count+15,len(lisnext))
+            
+            
             for i in range(global_count,end):
                 
-                if lisnext[i] != " ":
-                    characterchange = lisnext[i]     
+                if lisnext[i] != " ":  
                     for j in range(len(conf_mat[i])):
-                        # j = random.randint(0,len(conf_mat[i])-1)
                         testing = list(next_node)
                         testing[i] = conf_mat[i][j]
                         listostring = ""
@@ -87,12 +75,12 @@ class SentenceCorrector(object):
                         for k in range(len(mintillnow)):
                             listostringmin += mintillnow[k]    
                         # print(listostring, " main string")  
-                        print((self.best_state), " BEST")  
-                        print((listostringmin), " MIN")
-                        print((listostring), " CHKING")
-                        
-                        # time.sleep(0.1)  
-                        # print(self.cost_fn(listostringmin))    
+                        if debug:
+                            print((self.best_state), f" BEST {self.cost_fn(self.best_state)}")  
+                            print((listostringmin), f" MIN {self.cost_fn(listostringmin)}")
+                            print((listostring), f" CHKING {self.cost_fn(listostring)}")
+                        if timeout > 0:
+                            time.sleep(timeout)  
                         if self.cost_fn(listostring) < self.cost_fn(listostringmin):
                             chking = False
                             for y in range(len(tabulist)):
@@ -105,83 +93,73 @@ class SentenceCorrector(object):
                                
                                 if len(tabulist) < 100:
                                     mintillnow = testing
-                                    
-                                    # print(mintillnow)
                                     tabulist.append(mintillnow)
                                 else:
                                     tabulist.pop(0)
                                     mintillnow = testing
                                     tabulist.append(mintillnow)     
-                                    # print(mintillnow)   
                             
                             result = ""
-                            # print(mintillnow)
                             for k in range(0,len(mintillnow)):
-                                result += mintillnow[k]
-                            # print(result, " ", i, " ", j, " ", self.cost_fn(result))    
+                                result += mintillnow[k]  
                             if self.cost_fn(self.best_state) >= self.cost_fn(result):
                                 self.best_state = result 
-            # mintillnow = list(self.best_state)
-            
-            if peak:
-                print("FLAG")
-                
-                next_node = ""
-                for itr in  range(0,len(start_state)):
-                    if global_count <= itr and itr < end:
-                        if start_state[itr] != " ":
-                            randomnumber = random.randint(0,len(conf_mat[itr])-1)
-                            next_node += conf_mat[itr][randomnumber]
+            if israndom:
+                if peak:
+                    if debug:
+                        print("IT IS A PEAK, RANDOMIZING STRING")
+                    next_node = ""
+                    for itr in  range(0,len(self.best_state)):
+                        if global_count <= itr and itr < end:
+                            if self.best_state[itr] != " ":
+                                randomnumber = random.randint(0,1000000)
+                                randomnumber = randomnumber%len(conf_mat[itr])
+                                next_node += conf_mat[itr][randomnumber]
+                            else:
+                                next_node += " "    
                         else:
-                            next_node += " "    
-                    else:
-                        next_node += start_state[itr]        
-                loopcount += 1        
-                if loopcount > 3:        
-                    global_count += 15
-                    loopcount = 0
+                            next_node += self.best_state[itr]        
+                    loopcount += 1        
+                    if loopcount > loopcounts:   
+                        print("HERE")   
+                        global_count += segment_diff
+                        loopcount = 0
                     next_node = self.best_state
-                print(global_count)
-                if global_count >= len(lisnext):
-                    break
-                peak = False
-                # print("THIS IS PEAK")
-                # next_node = start_state
-                # BFS
-                # next_node = ""
-                # print("hue")
-                # for s in mintillnow:
-                #     if s != " ":
-                #         arr = []
-                #         arr.append(s)
-                #         for char  in self.conf_matrix[s]:
-                #             arr.append(char)
-                #         leng = len(arr)    
-                #         p = random.randint(0,100000)
-                #         p = p%(len(arr))
-                #         next_node += arr[p]
-                #     else:
-                #         next_node += " "   
-                # mintillnow = next_node        
-                # print(next_node, " RANDOM NODE")        
-                         
-                pass
-                            
-                            
-                            
-            else:                
-                next_node = ""            
-                for k in range(len(mintillnow)):
-                    next_node += mintillnow[k]
-                print(self.best_state, "  ", self.cost_fn(self.best_state))
-
-               
-                                            
-                        
-                        
-                    
-                                
-                    
+                    if debug:
+                        print("RUNNING LOCAL SEARCH ON SEGMENT : ", global_count, " This is loop count : ", loopcount)
+                    if global_count >= len(lisnext):
+                        break
+                else:               
+                    next_node = ""            
+                    for k in range(len(mintillnow)):
+                        next_node += mintillnow[k]
+                    global_count += segment_diff    
+                    if global_count >= len(lisnext):
+                        break
+            else:
+                if peak:
+                    if debug:
+                        print("IT IS A PEAK ENDING LOCAL SEARCH")    
+                    break   
+                else:                
+                    next_node = ""            
+                    for k in range(len(mintillnow)):
+                        next_node += mintillnow[k]
+                    global_count += segment_diff    
+                    if global_count >= len(lisnext):
+                        break
+                              
+    def search(self, start_state):
+        # self.local_search(string, left, right, segment_diff, random, debug, loopcounts, timeout)
+        self.local_search(start_state, 0, len(start_state), 15, True, True, 1, 0)
+        stry = self.best_state
+        self.local_search(stry, 0, len(stry), 15, True, True, 1, 0)
+        
+        
+        
+        
+    
+        
                     
         
              

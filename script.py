@@ -1,5 +1,5 @@
-fil = open("pred.txt","r")
-fil2 = open("output.txt","r")
+fil = open("data/pred.txt","r")
+fil2 = open("data/output.txt","r")
 j = 1
 while j <= 15:
     s1 = fil.readline()
