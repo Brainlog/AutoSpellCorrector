@@ -2,14 +2,15 @@
 import random
 import json
 
-fread = open('corpus.txt','r')
+fread = open('data/corpus.txt','r')
 sentence = fread.read()
 lines = sentence.split('\n')
-print(lines)
+# print(lines)
 fread.close()
-confmat=open('conf_matrix.json')
+confmat=open('data/conf_matrix.json')
 replace=json.load(confmat)
-fwrite = open('testcases.txt','a')
+fwrite = open('data/input.txt','w')
+inputtotal = ''
 # print(replace['a'][0])
 for line in lines:
     if(line=='\n' or line==' ' or line==''):
@@ -35,8 +36,9 @@ for line in lines:
                     inputtext+=line[i]
             else:
                 inputtext+=line[i]
-        fwrite.write(inputtext)
-        fwrite.write('\n')
+                
+        inputtotal+=(inputtext+'\n')
+fwrite.write(inputtotal)
 fwrite.close()
 
         

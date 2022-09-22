@@ -286,35 +286,52 @@ class SentenceCorrector(object):
                               
     def search(self, start_state):
         # self.local_search(string, left, right, segment_diff, random, debug, loopcounts, timeout, dfs, dfsfactor, beamfacotr)
-        self.local_search(start_state, 0, len(start_state), 15, True, False, 1, 0, False, 5)
-        stry = self.best_state
-        self.local_search(stry, 0, len(stry), 15, True, False, 1, 0, False, 5)
-        stry = self.best_state
-        self.local_beam_search(stry, 0, len(stry), 15, True, False,1, 0, False, 5, 16)
+        # self.local_search(start_state, 0, len(start_state), 15, True, False, 1, 0, False, 5)
         # stry = self.best_state
-        # self.local_search(stry, 0, len(stry), len(stry), 15, True, 1, 0, False, 5)
+        # self.local_search(stry, 0, len(stry), 15, True, False, 1, 0, False, 5)
         # stry = self.best_state
-        # self.local_search(stry, 0, len(stry), len(stry), 15, True, 1, 0, False, 5)
-        # stry = self.best_state
-        # self.local_search(stry, 0, len(stry), len(stry), 15, True, 1, 0, False, 5)
+        # self.local_beam_search(stry, 0, len(stry), 15, True, False,1, 0, False, 5, 16)
+        # # stry = self.best_state
+        # # self.local_search(stry, 0, len(stry), len(stry), 15, True, 1, 0, False, 5)
+        # # stry = self.best_state
+        # # self.local_search(stry, 0, len(stry), len(stry), 15, True, 1, 0, False, 5)
+        # # stry = self.best_state
+        # # self.local_search(stry, 0, len(stry), len(stry), 15, True, 1, 0, False, 5)
         
-        print("khtm")
+        # print("khtm")
         wordlim = []
         init = 0
         end = 0
-        
-        for i in range(len(stry)):
-            if(stry[i]==' '):
-                end = i
-                wordlim.append((init,end))
-                init = i+1
-        # print(wordlim)
-        count = 1
-        for tup in wordlim:
-            # print(tup[0])
-            # self.local_search(stry, tup[0], tup[1]+1, 10, True, False, 5, 0, True, 4)
-            self.dfs(start_state, tup[0], tup[1]+1, 4)
-            # print(f'BEST STATE BY CHANGING WORD NUMBER {count}: {self.best_state}')
+        count = 0
+        for i in range(len(start_state)):
+            if(start_state[i]==' '):
+                if(count>4):
+                    end = i
+                    wordlim.append((init,end+1))
+                    init = i+1
+                    count = 0
+                    
             count+=1
-        # self.local_search(stry, 0, len(stry), 15, True, False, 1, 0)
-        # print("khtm")
+
+        # # print("khtm")
+        l = len(start_state)
+        i=0
+        t = len(wordlim)
+        while(i<t):
+            tup=(wordlim[i][0], wordlim[i][1])
+            print(f'COST FUN OF SEGMENT {start_state[tup[0]:tup[1]]}: {self.cost_fn(start_state[tup[0]:tup[1]])}')
+            i+=1
+        print(f'COST FUN OF SENTENCE {start_state}: {self.cost_fn(start_state)}')
+        
+        
+        
+        
+    
+        
+                    
+        
+             
+       
+                
+      
+      
