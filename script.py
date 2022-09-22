@@ -1,7 +1,11 @@
+from distutils import core
+
+
 fil = open("data/pred.txt","r")
 fil2 = open("data/output.txt","r")
 j = 0
 accur = 0
+correct =0 
 while True:
     s1 = fil.readline()
     s2 = fil2.readline()
@@ -16,6 +20,10 @@ while True:
             diff+=1
         count += 1  
     curracc=  (diff/count)*100
+    if diff == count:
+        correct += 1
     j += 1
     print(f'ACCURACY {j}: {curracc}% CHARACTERS MATCH')
     accur += curracc
+print(f"FINAL CORRECT STRINGS : {(correct/200)*100}")    
+    

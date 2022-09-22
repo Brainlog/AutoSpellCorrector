@@ -35,13 +35,13 @@ class SentenceCorrector(object):
                 conf_mat[x]=dict[str[x]]
         return conf_mat  
     
-    def local_search(self, str, left, right, segment_diff,israndom, debug, loopcounts, timeout, dfs, dfsfactor, localfactor):
+    def local_search(self, conf_mat,str, left, right, segment_diff,israndom, debug, loopcounts, timeout, dfs, dfsfactor, localfactor):
         tabulist = []
         self.best_state = str
         curr = self.best_state
         next_node = curr
         count = 0
-        conf_mat = self.whole_string_substituter(str)
+        # conf_mat = self.whole_string_substituter(start)
         if debug:
             print(conf_mat)
         
@@ -111,6 +111,7 @@ class SentenceCorrector(object):
                                 testing = list(next_node)
                                 testing[i] = conf_mat[i][j]
                                 testing[iterator2] = conf_mat[iterator2][iterator3]
+                                
                                 listostring = ""
                                 for k in range(len(testing)):
                                     listostring += testing[k]
@@ -124,6 +125,7 @@ class SentenceCorrector(object):
                                     print((listostring), f" CHKING {self.cost_fn(listostring)}")
                                 if timeout > 0:
                                     time.sleep(timeout)  
+                                # time.sleep(1)    
                                 if self.cost_fn(listostring) < self.cost_fn(listostringmin):
                                     chking = False
                                     for y in range(len(tabulist)):
@@ -226,6 +228,7 @@ class SentenceCorrector(object):
                                 print((self.best_state), f" BEST {self.cost_fn(self.best_state)}")  
                                 print((listostringmin), f" MIN {self.cost_fn(listostringmin)}")
                                 print((listostring), f" CHKING {self.cost_fn(listostring)}")
+                            # time.sleep(1)
                             if timeout > 0:
                                 time.sleep(timeout)  
                             chk = False   
@@ -331,10 +334,11 @@ class SentenceCorrector(object):
                                         stack.append((node,ind+1))             
                               
     def search(self, start_state):
+        conf_mat = self.whole_string_substituter(start_state)
         # self.local_search(string, left, right, segment_diff, random, debug, loopcounts, timeout, dfs, dfsfactor)
-        self.local_search(start_state, 0, len(start_state), 15, True, False, 1, 0, False, 5, 1)
+        self.local_search(conf_mat, start_state,0, len(start_state), 15, True, False, 1, 0, False, 5, 1)
         stry = self.best_state
-        self.local_search(stry, 0, len(stry), 15, True, False, 1, 0, False, 5, 1)
+        self.local_search(conf_mat,stry, 0, len(stry), 15, True, False, 1, 0, False, 5, 1)
         
         wordlim = []
         init = 0
@@ -342,38 +346,54 @@ class SentenceCorrector(object):
         count = 0
         for i in range(len(self.best_state)):
             if(self.best_state[i]==' '):
-                if(count>4):
+                # if(count>4):
                     end = i
                     wordlim.append((init,end+1))
                     init = i+1
-                    count = 0
+                    # count = 0
                     
-            count+=1
-
+            # count+=1
+        
         # # print("khtm")
         l = len(start_state)
         i=0
         t = len(wordlim)
         contribution = []
-        while(i<t):
-            tup=(wordlim[i][0], wordlim[i][1])
-            # print(f'COST FUN OF SEGMENT {self.best_state[tup[0]:tup[1]]}: {self.cost_fn(self.best_state[tup[0]:tup[1]])}')
-            contribution.append([self.cost_fn(self.best_state[tup[0]:tup[1]]), tup[0], tup[1]])
-            i+=1
+        # print(f'ACHEIVED ON LOCAL: {self.best_state}')
+        
+        
+        while(i+1<t):
+            if(wordlim[i][1]-wordlim[i][0]<=6 and wordlim[i+1][1]-wordlim[i+1][0]<=6):
+                    tup=(wordlim[i][0], wordlim[i+1][1])
+                    # print(f'COST FUN OF SEGMENT {self.best_state[tup[0]:tup[1]]}: {self.cost_fn(self.best_state[tup[0]:tup[1]])}')
+                    contribution.append([self.cost_fn(self.best_state[tup[0]:tup[1]]), tup[0], tup[1]])
+                    i+=2
+            else:
+                    tup=(wordlim[i][0], wordlim[i][1])
+                    # print(f'COST FUN OF SEGMENT {self.best_state[tup[0]:tup[1]]}: {self.cost_fn(self.best_state[tup[0]:tup[1]])}')
+                    contribution.append([self.cost_fn(self.best_state[tup[0]:tup[1]]), tup[0], tup[1]])
+                    i+=1
+                    
+                
         # print(f'COST FUN OF SENTENCE {self.best_state}: {self.cost_fn(self.best_state)}')
         contribution.sort()
         contribution.reverse()
-        print(contribution)
+        # print(contribution)
+        for j in range(0,len(contribution)):
+            print(self.best_state[contribution[j][1]:contribution[j][2]], " ", self.cost_fn(self.best_state[contribution[j][1]:contribution[j][2]]))
+        global_count = 0
+        indi = 0
         while(len(contribution)>0):
-            segment = contribution.pop(0)
-            print(segment, f" {self.best_state[segment[1]:segment[2]]}")
-            self.local_search(self.best_state, segment[1], segment[2], segment[2]-segment[1]+1, True, False, 1, 0, False, 5, 2)
-            # break
- 
-        
-        
-        
-        
+            segment = contribution[0]
+            contribution.pop(0)
+            # if global_count > 4:
+                # break
+            # print(segment, f"SEGMENT TAKEN: {self.best_state[segment[1]:segment[2]]}")
+            self.local_search(conf_mat,self.best_state, segment[1], segment[2], segment[2]-segment[1]+1, True, False, 1, 0, False, 5, 2)
+            # time.sleep(1)
+            global_count += 1
+
+        # # self.local_beam_search(self.best_state, 0, len(self.best_state), 15, True, True, 1, 0, False, 5, 16)
     
         
                     
