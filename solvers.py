@@ -1,3 +1,4 @@
+from threading import local
 import time
 import random
 class SentenceCorrector(object):
@@ -34,7 +35,7 @@ class SentenceCorrector(object):
                 conf_mat[x]=dict[str[x]]
         return conf_mat  
     
-    def local_search(self, str, left, right, segment_diff,israndom, debug, loopcounts, timeout, dfs, dfsfactor):
+    def local_search(self, str, left, right, segment_diff,israndom, debug, loopcounts, timeout, dfs, dfsfactor, localfactor):
         tabulist = []
         self.best_state = str
         curr = self.best_state
@@ -58,49 +59,94 @@ class SentenceCorrector(object):
             end = min(global_count+segment_diff,right)
             peak = True
             
-            
-            for i in range(global_count,end):
-                
-                if lisnext[i] != " ":  
-                    for j in range(len(conf_mat[i])):
-                        testing = list(next_node)
-                        testing[i] = conf_mat[i][j]
-                        listostring = ""
-                        for k in range(len(testing)):
-                            listostring += testing[k]
-                        listostringmin = ""    
-                        for k in range(len(mintillnow)):
-                            listostringmin += mintillnow[k]    
-                        # print(listostring, " main string")  
-                        if debug:
-                            print((self.best_state), f" BEST {self.cost_fn(self.best_state)}")  
-                            print((listostringmin), f" MIN {self.cost_fn(listostringmin)}")
-                            print((listostring), f" CHKING {self.cost_fn(listostring)}")
-                        if timeout > 0:
-                            time.sleep(timeout)  
-                        if self.cost_fn(listostring) < self.cost_fn(listostringmin):
-                            chking = False
-                            for y in range(len(tabulist)):
-                                if tabulist[y] == listostring:
-                                    chking = True
-                            if chking == True:
-                                pass
-                            else:
-                                peak = False
-                               
-                                if len(tabulist) < 100:
-                                    mintillnow = testing
-                                    tabulist.append(mintillnow)
+            if localfactor == 1:
+                for i in range(global_count,end):
+                    
+                    if lisnext[i] != " ":  
+                        for j in range(len(conf_mat[i])):
+                            testing = list(next_node)
+                            testing[i] = conf_mat[i][j]
+                            listostring = ""
+                            for k in range(len(testing)):
+                                listostring += testing[k]
+                            listostringmin = ""    
+                            for k in range(len(mintillnow)):
+                                listostringmin += mintillnow[k]    
+                            # print(listostring, " main string")  
+                            if debug:
+                                print((self.best_state), f" BEST {self.cost_fn(self.best_state)}")  
+                                print((listostringmin), f" MIN {self.cost_fn(listostringmin)}")
+                                print((listostring), f" CHKING {self.cost_fn(listostring)}")
+                            if timeout > 0:
+                                time.sleep(timeout)  
+                            if self.cost_fn(listostring) < self.cost_fn(listostringmin):
+                                chking = False
+                                for y in range(len(tabulist)):
+                                    if tabulist[y] == listostring:
+                                        chking = True
+                                if chking == True:
+                                    pass
                                 else:
-                                    tabulist.pop(0)
-                                    mintillnow = testing
-                                    tabulist.append(mintillnow)     
-                            
-                            result = ""
-                            for k in range(0,len(mintillnow)):
-                                result += mintillnow[k]  
-                            if self.cost_fn(self.best_state) >= self.cost_fn(result):
-                                self.best_state = result 
+                                    peak = False
+                                
+                                    if len(tabulist) < 100:
+                                        mintillnow = testing
+                                        tabulist.append(mintillnow)
+                                    else:
+                                        tabulist.pop(0)
+                                        mintillnow = testing
+                                        tabulist.append(mintillnow)     
+                                
+                                result = ""
+                                for k in range(0,len(mintillnow)):
+                                    result += mintillnow[k]  
+                                if self.cost_fn(self.best_state) >= self.cost_fn(result):
+                                    self.best_state = result 
+            if localfactor == 2:
+                for i in range(global_count,end):
+                   for iterator2 in range(i+1,end):     
+                    if lisnext[i] != " ":  
+                        for j in range(len(conf_mat[i])):
+                            for iterator3 in range(len(conf_mat[iterator2])):
+                                testing = list(next_node)
+                                testing[i] = conf_mat[i][j]
+                                testing[iterator2] = conf_mat[iterator2][iterator3]
+                                listostring = ""
+                                for k in range(len(testing)):
+                                    listostring += testing[k]
+                                listostringmin = ""    
+                                for k in range(len(mintillnow)):
+                                    listostringmin += mintillnow[k]    
+                                # print(listostring, " main string")  
+                                if debug:
+                                    print((self.best_state), f" BEST {self.cost_fn(self.best_state)}")  
+                                    print((listostringmin), f" MIN {self.cost_fn(listostringmin)}")
+                                    print((listostring), f" CHKING {self.cost_fn(listostring)}")
+                                if timeout > 0:
+                                    time.sleep(timeout)  
+                                if self.cost_fn(listostring) < self.cost_fn(listostringmin):
+                                    chking = False
+                                    for y in range(len(tabulist)):
+                                        if tabulist[y] == listostring:
+                                            chking = True
+                                    if chking == True:
+                                        pass
+                                    else:
+                                        peak = False
+                                    
+                                        if len(tabulist) < 100:
+                                            mintillnow = testing
+                                            tabulist.append(mintillnow)
+                                        else:
+                                            tabulist.pop(0)
+                                            mintillnow = testing
+                                            tabulist.append(mintillnow)     
+                                    
+                                    result = ""
+                                    for k in range(0,len(mintillnow)):
+                                        result += mintillnow[k]  
+                                    if self.cost_fn(self.best_state) >= self.cost_fn(result):
+                                        self.best_state = result                       
             if israndom:
                 if peak:
                     if debug:
@@ -285,40 +331,45 @@ class SentenceCorrector(object):
                                         stack.append((node,ind+1))             
                               
     def search(self, start_state):
-        # self.local_search(string, left, right, segment_diff, random, debug, loopcounts, timeout, dfs, dfsfactor, beamfacotr)
-        self.local_search(start_state, 0, len(start_state), 15, True, False, 1, 0, False, 5)
+        # self.local_search(string, left, right, segment_diff, random, debug, loopcounts, timeout, dfs, dfsfactor)
+        self.local_search(start_state, 0, len(start_state), 15, True, False, 1, 0, False, 5, 1)
         stry = self.best_state
-        self.local_search(stry, 0, len(stry), 15, True, False, 1, 0, False, 5)
-        stry = self.best_state
-        self.local_beam_search(stry, 0, len(stry), 15, True, False,1, 0, False, 5, 16)
-        # stry = self.best_state
-        # self.local_search(stry, 0, len(stry), len(stry), 15, True, 1, 0, False, 5)
-        # stry = self.best_state
-        # self.local_search(stry, 0, len(stry), len(stry), 15, True, 1, 0, False, 5)
-        # stry = self.best_state
-        # self.local_search(stry, 0, len(stry), len(stry), 15, True, 1, 0, False, 5)
+        self.local_search(stry, 0, len(stry), 15, True, False, 1, 0, False, 5, 1)
         
-        print("khtm")
         wordlim = []
         init = 0
         end = 0
-        
-        for i in range(len(stry)):
-            if(stry[i]==' '):
-                end = i
-                wordlim.append((init,end))
-                init = i+1
-        # print(wordlim)
-        count = 1
-        for tup in wordlim:
-            # print(tup[0])
-            # self.local_search(stry, tup[0], tup[1]+1, 10, True, False, 5, 0, True, 4)
-            self.dfs(start_state, tup[0], tup[1]+1, 4)
-            # print(f'BEST STATE BY CHANGING WORD NUMBER {count}: {self.best_state}')
+        count = 0
+        for i in range(len(self.best_state)):
+            if(self.best_state[i]==' '):
+                if(count>4):
+                    end = i
+                    wordlim.append((init,end+1))
+                    init = i+1
+                    count = 0
+                    
             count+=1
-        # self.local_search(stry, 0, len(stry), 15, True, False, 1, 0)
-        # print("khtm")
-        
+
+        # # print("khtm")
+        l = len(start_state)
+        i=0
+        t = len(wordlim)
+        contribution = []
+        while(i<t):
+            tup=(wordlim[i][0], wordlim[i][1])
+            # print(f'COST FUN OF SEGMENT {self.best_state[tup[0]:tup[1]]}: {self.cost_fn(self.best_state[tup[0]:tup[1]])}')
+            contribution.append([self.cost_fn(self.best_state[tup[0]:tup[1]]), tup[0], tup[1]])
+            i+=1
+        # print(f'COST FUN OF SENTENCE {self.best_state}: {self.cost_fn(self.best_state)}')
+        contribution.sort()
+        contribution.reverse()
+        print(contribution)
+        while(len(contribution)>0):
+            segment = contribution.pop(0)
+            print(segment, f" {self.best_state[segment[1]:segment[2]]}")
+            self.local_search(self.best_state, segment[1], segment[2], segment[2]-segment[1]+1, True, False, 1, 0, False, 5, 2)
+            # break
+ 
         
         
         

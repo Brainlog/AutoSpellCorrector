@@ -5,7 +5,7 @@ accur = 0
 while True:
     s1 = fil.readline()
     s2 = fil2.readline()
-    if(s1=='\n' or s2=='\n'):
+    if(s1=='\n' or s2=='\n' or s1==' ' or s1==''):
         print('END OF TEST CASES')
         print(f'TOTAL ACCURACY FOR {j} TEST CASES: {accur/j}%')
         break
@@ -19,4 +19,3 @@ while True:
     j += 1
     print(f'ACCURACY {j}: {curracc}% CHARACTERS MATCH')
     accur += curracc
-    
